@@ -31,7 +31,7 @@ options:
   image:
     description:
       - image to use for bootable volumes. Can be an C(id), C(human_id) or
-        C(name)
+        C(name). This option requires C(pyrax>=1.9.3)
     default: null
     version_added: 1.8
   meta:
@@ -105,6 +105,8 @@ EXAMPLES = '''
       register: my_volume
 '''
 
+from distutils.version import LooseVersion
+
 try:
     import pyrax
     HAS_PYRAX = True
@@ -134,6 +136,11 @@ def cloud_block_storage(module, state, name, description, meta, size,
                              'incorrectly capitalized region name.')
 
     if image:
+        # pyrax<1.9.3 did not have support for specifying an image when
+        # creating a volume which is required for bootable volumes
+        if LooseVersion(pyrax.version.version) < LooseVersion('1.9.3'):
+            module.fail_json(msg='Creating a bootable volume requires '
+                                 'pyrax>=1.9.3')
         image = rax_find_image(module, pyrax, image)
 
     volume = rax_find_volume(module, pyrax, name)
@@ -226,5 +233,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.rax import *
 
-### invoke the module
+# invoke the module
 main()

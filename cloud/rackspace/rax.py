@@ -37,11 +37,12 @@ options:
     version_added: 1.5
   boot_volume:
     description:
-      - Cloud Block Storage volume to boot from
+      - Bootable Cloud Block Storage volume to boot from
     version_added: 1.8
   boot_volume_terminate:
     description:
-      - Whether the I(boot_volume) be terminated when the server is terminated
+      - Whether the I(boot_volume) will be terminated when the server is
+        terminated
     default: no
     choices:
       - "yes"
