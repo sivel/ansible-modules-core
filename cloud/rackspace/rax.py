@@ -438,11 +438,16 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
 
     # act on the state
     if state == 'present':
-        for arg, value in dict(name=name, flavor=flavor,
-                               image=image).iteritems():
+        for arg, value in dict(name=name, flavor=flavor).iteritems():
             if not value:
                 module.fail_json(msg='%s is required for the "rax" module' %
                                      arg)
+
+        bdmv2 = 'block_device_mapping_v2' in extra_create_args
+        bdm = 'block_device_mapping' in extra_create_args
+
+        if (not bdmv2 and not bdm) and not image:
+            module.fail_json(msg='image is required for the "rax" module')
 
         # Idempotent ensurance of a specific count of servers
         if exact_count is not False:
