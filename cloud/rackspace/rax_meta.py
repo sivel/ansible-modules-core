@@ -90,13 +90,13 @@ def rax_meta(module, address, name, server_id, meta):
     if name:
         search_opts = dict(name='^%s$' % name)
         try:
-            servers = cs.servers.list(search_opts=search_opts)
+            servers = rax_list_iterator(cs.servers, search_opts=search_opts)
         except Exception, e:
             module.fail_json(msg='%s' % e.message)
     elif address:
         servers = []
         try:
-            for server in cs.servers.list():
+            for server in rax_list_iterator(cs.servers):
                 for addresses in server.networks.values():
                     if address in addresses:
                         servers.append(server)

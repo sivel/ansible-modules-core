@@ -466,7 +466,7 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
 
                 # regex pattern to match printf formatting
                 pattern = re.sub(r'%\d*[sd]', r'(\d+)', name)
-                for server in cs.servers.list():
+                for server in rax_list_iterator(cs.servers):
                     # Ignore DELETED servers
                     if server.status == 'DELETED':
                         continue
@@ -481,7 +481,7 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                 available_numbers = list(set(number_range)
                                          .difference(numbers))
             else:  # Not auto incrementing
-                for server in cs.servers.list():
+                for server in rax_list_iterator(cs.servers):
                     # Ignore DELETED servers
                     if server.status == 'DELETED':
                         continue
@@ -556,7 +556,7 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
 
                     # regex pattern to match printf formatting
                     pattern = re.sub(r'%\d*[sd]', r'(\d+)', name)
-                    for server in cs.servers.list():
+                    for server in rax_list_iterator(cs.servers):
                         # Ignore DELETED servers
                         if server.status == 'DELETED':
                             continue
@@ -587,7 +587,7 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                     'flavor': flavor
                 }
                 servers = []
-                for server in cs.servers.list(search_opts=search_opts):
+                for server in rax_list_iterator(cs.servers, search_opts=search_opts):
                     # Ignore DELETED servers
                     if server.status == 'DELETED':
                         continue
@@ -637,7 +637,7 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                 'image': image,
                 'flavor': flavor
             }
-            for server in cs.servers.list(search_opts=search_opts):
+            for server in rax_list_iterator(cs.servers, search_opts=search_opts):
                 # Ignore DELETED servers
                 if server.status == 'DELETED':
                     continue

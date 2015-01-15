@@ -150,7 +150,8 @@ def rax_asp(module, at=None, change=0, cron=None, cooldown=300,
             module.fail_json(msg='%s' % e.message)
 
     if state == 'present':
-        policies = filter(lambda p: name == p.name, sg.list_policies())
+        policies = filter(lambda p: name == p.name,
+                          rax_list_iterator(sg, method='list_policies'))
         if len(policies) > 1:
             module.fail_json(msg='No unique policy match found by name')
         if at:
@@ -209,7 +210,8 @@ def rax_asp(module, at=None, change=0, cron=None, cooldown=300,
 
     else:
         try:
-            policies = filter(lambda p: name == p.name, sg.list_policies())
+            policies = filter(lambda p: name == p.name,
+                              rax_list_iterator(sg, method='list_policies'))
             if len(policies) > 1:
                 module.fail_json(msg='No unique policy match found by name')
             elif not policies:

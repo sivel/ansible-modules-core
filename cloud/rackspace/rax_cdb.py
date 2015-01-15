@@ -83,7 +83,7 @@ except ImportError:
 def find_instance(name):
 
     cdb = pyrax.cloud_databases
-    instances = cdb.list()
+    instances = rax_list_iterator(cdb)
     if instances:
         for instance in instances:
             if instance.name == name:

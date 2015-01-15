@@ -81,7 +81,7 @@ except ImportError:
 def find_user(instance, name):
     try:
         user = instance.get_user(name)
-    except Exception:
+    except pyrax.exceptions.NoSuchDatabaseUser:
         return False
 
     return user

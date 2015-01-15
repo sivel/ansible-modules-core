@@ -77,7 +77,7 @@ def cloud_queue(module, state, name):
                              'typically indicates an invalid region or an '
                              'incorrectly capitalized region name.')
 
-    for queue in cq.list():
+    for queue in rax_list_iterator(cq):
         if name != queue.name:
             continue
 
