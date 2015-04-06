@@ -376,7 +376,9 @@ def main():
     elif state in ['started', 'present']:
         ### wait for start condition
         end = start + datetime.timedelta(seconds=timeout)
+        err = None
         while datetime.datetime.now() < end:
+            err = None
             if path:
                 try:
                     os.stat(path)
@@ -425,21 +427,25 @@ def main():
                         s.shutdown(socket.SHUT_RDWR)
                         s.close()
                         break
-                except:
+                except Exception, err:
                     time.sleep(1)
                     pass
         else:
             elapsed = datetime.datetime.now() - start
+            if err:
+                error_string = ': %s' % err
+            else:
+                error_string = ''
             if port:
                 if search_regex:
-                    module.fail_json(msg="Timeout when waiting for search string %s in %s:%s" % (search_regex, host, port), elapsed=elapsed.seconds)
+                    module.fail_json(msg="Timeout when waiting for search string %s in %s:%s%s" % (search_regex, host, port, error_string), elapsed=elapsed.seconds)
                 else:
-                    module.fail_json(msg="Timeout when waiting for %s:%s" % (host, port), elapsed=elapsed.seconds)
+                    module.fail_json(msg="Timeout when waiting for %s:%s%s" % (host, port, error_string), elapsed=elapsed.seconds)
             elif path:
                 if search_regex:
-                    module.fail_json(msg="Timeout when waiting for search string %s in %s" % (search_regex, path), elapsed=elapsed.seconds)
+                    module.fail_json(msg="Timeout when waiting for search string %s in %s%s" % (search_regex, path, error_string), elapsed=elapsed.seconds)
                 else:
-                    module.fail_json(msg="Timeout when waiting for file %s" % (path), elapsed=elapsed.seconds)
+                    module.fail_json(msg="Timeout when waiting for file %s%s" % (path, error_string), elapsed=elapsed.seconds)
 
     elif state == 'drained':
         ### wait until all active connections are gone
