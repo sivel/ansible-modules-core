@@ -27,7 +27,7 @@ module: docker
 version_added: "1.4"
 short_description: manage docker containers
 description:
-  - Manage the life cycle of docker containers
+  - Manage the life cycle of docker containers.
 options:
   count:
     description:
@@ -399,10 +399,6 @@ requirements:
     - "python >= 2.6"
     - "docker-py >= 0.3.0"
     - "The docker server >= 0.10.0"
-notes:
-    - |
-      Additional and newer modules are available. For the latest on orchestrating containers with Ansible
-      visit our Getting Started with Docker Guide at https://github.com/ansible/ansible/blob/devel/docsite/rst/guide_docker.rst.
 '''
 
 EXAMPLES = '''
