@@ -23,382 +23,385 @@
 
 DOCUMENTATION = '''
 ---
-module: docker
-version_added: "1.4"
-short_description: manage docker containers
+author:
+- Cove Schneider (@cove)
+- Joshua Conner (@joshuaconner)
+- Pavel Antonov (@softzilla)
+- Thomas Steinbach (@ThomasSteinbach)
+- Philippe Jandot (@zfil)
+- Daan Oosterveld (@dusdanig)
 description:
-  - Manage the life cycle of docker containers.
+- Manage the life cycle of docker containers.
+module: docker
 options:
-  count:
+  cap_add:
+    default: false
     description:
-      - Number of matching containers that should be in the desired state.
-    default: 1
-  image:
-    description:
-      - Container image used to match and launch containers.
-    required: true
-  pull:
-    description:
-      - Control when container images are updated from the C(docker_url) registry.
-        If "missing," images will be pulled only when missing from the host;
-        if '"always," the registry will be checked for a newer version of the
-        image' each time the task executes.
-    default: missing
-    choices: [ "missing", "always" ]
-    version_added: "1.9"
-  entrypoint:
-    description:
-      - Corresponds to ``--entrypoint`` option of ``docker run`` command and
-        ``ENTRYPOINT`` directive of Dockerfile.
-        Used to match and launch containers.
-    default: null
+    - Add capabilities for the container. Requires docker-py >= 0.5.0.
     required: false
-    version_added: "2.1"
+    version_added: '2.0'
+  cap_drop:
+    aliases: []
+    default: false
+    description:
+    - Drop capabilities for the container. Requires docker-py >= 0.5.0.
+    required: false
+    version_added: '2.0'
   command:
-    description:
-      - Command used to match and launch containers.
     default: null
-  name:
     description:
-      - Name used to match and uniquely name launched containers. Explicit names
-        are used to uniquely identify a single container or to link among
-        containers. Mutually exclusive with a "count" other than "1".
+    - Command used to match and launch containers.
+  count:
+    default: 1
+    description:
+    - Number of matching containers that should be in the desired state.
+  cpu_set:
     default: null
-    version_added: "1.5"
-  ports:
     description:
-      - "List containing private to public port mapping specification.
-        Use docker 'CLI-style syntax: C(8000), C(9000:8000), or C(0.0.0.0:9000:8000)'
-        where 8000 is a container port, 9000 is a host port, and 0.0.0.0 is - a host interface.
-        The container ports need to be exposed either in the Dockerfile or via the C(expose) option."
-    default: null
-    version_added: "1.5"
-  expose:
-    description:
-      - List of additional container ports to expose for port mappings or links.
-        If the port is already exposed using EXPOSE in a Dockerfile, you don't
-        need to expose it again.
-    default: null
-    version_added: "1.5"
-  publish_all_ports:
-    description:
-      - Publish all exposed ports to the host interfaces.
-    default: false
-    version_added: "1.5"
-  volumes:
-    description:
-      - List of volumes to mount within the container
-      - 'Use docker CLI-style syntax: C(/host:/container[:mode])'
-      - You can specify a read mode for the mount with either C(ro) or C(rw).
-        Starting at version 2.1, SELinux hosts can additionally use C(z) or C(Z)
-        mount options to use a shared or private label for the volume.
-    default: null
-  volumes_from:
-    description:
-      - List of names of containers to mount volumes from.
-    default: null
-  links:
-    description:
-      - List of other containers to link within this container with an optional
-      - 'alias. Use docker CLI-style syntax: C(redis:myredis).'
-    default: null
-    version_added: "1.5"
-  devices:
-    description:
-      - List of host devices to expose to container
-    default: null
+    - CPUs in which to allow execution. Requires docker-py >= 0.6.0.
     required: false
-    version_added: "2.1"
-  log_driver:
-    description:
-      - You can specify a different logging driver for the container than for the daemon.
-        "json-file" Default logging driver for Docker. Writes JSON messages to file.
-        docker logs command is available only for this logging driver.
-        "none" disables any logging for the container.
-        "syslog" Syslog logging driver for Docker. Writes log messages to syslog.
-        docker logs command is not available for this logging driver.
-        "journald" Journald logging driver for Docker. Writes log messages to "journald".
-        "gelf" Graylog Extended Log Format (GELF) logging driver for Docker. Writes log messages to a GELF endpoint likeGraylog or Logstash.
-        "fluentd" Fluentd logging driver for Docker. Writes log messages to "fluentd" (forward input).
-        "awslogs" (added in 2.1) Awslogs logging driver for Docker. Writes log messages to AWS Cloudwatch Logs.
-        If not defined explicitly, the Docker daemon's default ("json-file") will apply.
-        Requires docker >= 1.6.0.
-    required: false
-    default: json-file
-    choices:
-      - json-file
-      - none
-      - syslog
-      - journald
-      - gelf
-      - fluentd
-      - awslogs
-    version_added: "2.0"
-  log_opt:
-    description:
-      - Additional options to pass to the logging driver selected above. See Docker `log-driver
-        <https://docs.docker.com/reference/logging/overview/>` documentation for more information.
-        Requires docker >=1.7.0.
-    required: false
-    default: null
-    version_added: "2.0"
-  memory_limit:
-    description:
-      - RAM allocated to the container as a number of bytes or as a human-readable
-        string like "512MB". Leave as "0" to specify no limit.
+    version_added: '2.0'
+  cpu_shares:
     default: 0
-  docker_url:
     description:
-      - URL of the host running the docker daemon. This will default to the env
-        var DOCKER_HOST if unspecified.
-    default: ${DOCKER_HOST} or unix://var/run/docker.sock
-  use_tls:
-    description:
-      - Whether to use tls to connect to the docker server.  "no" means not to
-        use tls (and ignore any other tls related parameters). "encrypt" means
-        to use tls to encrypt the connection to the server.  "verify" means to
-        also verify that the server's certificate is valid for the server
-        (this both verifies the certificate against the CA and that the
-        certificate was issued for that host. If this is unspecified, tls will
-        only be used if one of the other tls options require it.
-    choices: [ "no", "encrypt", "verify" ]
-    version_added: "1.9"
-  tls_client_cert:
-    description:
-      - Path to the PEM-encoded certificate used to authenticate docker client.
-        If specified tls_client_key must be valid
-    default: ${DOCKER_CERT_PATH}/cert.pem
-    version_added: "1.9"
-  tls_client_key:
-    description:
-      - Path to the PEM-encoded key used to authenticate docker client. If
-        specified tls_client_cert must be valid
-    default: ${DOCKER_CERT_PATH}/key.pem
-    version_added: "1.9"
-  tls_ca_cert:
-    description:
-      - Path to a PEM-encoded certificate authority to secure the Docker connection.
-        This has no effect if use_tls is encrypt.
-    default: ${DOCKER_CERT_PATH}/ca.pem
-    version_added: "1.9"
-  tls_hostname:
-    description:
-      - A hostname to check matches what's supplied in the docker server's
-        certificate.  If unspecified, the hostname is taken from the docker_url.
-    default: Taken from docker_url
-    version_added: "1.9"
-  docker_api_version:
-    description:
-      - Remote API version to use. This defaults to the current default as
-        specified by docker-py.
-    default: docker-py default remote API version
-    version_added: "1.8"
-  docker_user:
-    description:
-      - Username or UID to use within the container
+    - CPU shares (relative weight). Requires docker-py >= 0.6.0.
     required: false
-    default: null
-    version_added: "2.0"
-  username:
-    description:
-      - Remote API username.
-    default: null
-  password:
-    description:
-      - Remote API password.
-    default: null
-  email:
-    description:
-      - Remote API email.
-    default: null
-  hostname:
-    description:
-      - Container hostname.
-    default: null
-  domainname:
-    description:
-      - Container domain name.
-    default: null
-  env:
-    description:
-      - Pass a dict of environment variables to the container.
-    default: null
-  env_file:
-    version_added: "2.1"
-    description:
-      - Pass in a path to a file with environment variable (FOO=BAR).
-        If a key value is present in both explicitly presented (i.e. as 'env')
-        and in the environment file, the explicit value will override.
-        Requires docker-py >= 1.4.0.
-    default: null
-    required: false
-  dns:
-    description:
-      - List of custom DNS servers for the container.
-    required: false
-    default: null
+    version_added: '2.1'
   detach:
-    description:
-      - Enable detached mode to leave the container running in background. If
-        disabled, fail unless the process exits cleanly.
     default: true
-  signal:
-    version_added: "2.0"
     description:
-      - With the state "killed", you can alter the signal sent to the
-        container.
-    required: false
-    default: KILL
-  state:
-    description:
-      - Assert the container's desired state. "present" only asserts that the
-        matching containers exist. "started" asserts that the matching
-        containers both exist and are running, but takes no action if any
-        configuration has changed. "reloaded" (added in Ansible 1.9) asserts that all matching
-        containers are running and restarts any that have any images or
-        configuration out of date. "restarted" unconditionally restarts (or
-        starts) the matching containers. "stopped" and '"killed" stop and kill
-        all matching containers. "absent" stops and then' removes any matching
-        containers.
-    required: false
-    default: started
-    choices:
-      - present
-      - started
-      - reloaded
-      - restarted
-      - stopped
-      - killed
-      - absent
-  privileged:
-    description:
-      - Whether the container should run in privileged mode or not.
-    default: false
-  lxc_conf:
-    description:
-      - LXC configuration parameters, such as C(lxc.aa_profile:unconfined).
+    - Enable detached mode to leave the container running in background. If disabled,
+      fail unless the process exits cleanly.
+  devices:
     default: null
-  stdin_open:
     description:
-      - Keep stdin open after a container is launched.
-    default: false
-    version_added: "1.6"
-  tty:
-    description:
-      - Allocate a pseudo-tty within the container.
-    default: false
-    version_added: "1.6"
-  net:
-    description:
-      - 'Network mode for the launched container: bridge, none, container:<name|id>'
-      - or host. Requires docker >= 0.11.
-    default: false
-    version_added: "1.8"
-  pid:
-    description:
-      - Set the PID namespace mode for the container (currently only supports 'host'). Requires docker-py >= 1.0.0 and docker >= 1.5.0
+    - List of host devices to expose to container
     required: false
-    default: None
-    aliases: []
-    version_added: "1.9"
-  registry:
-    description:
-      - Remote registry URL to pull images from.
-    default: DockerHub
-    aliases: []
-    version_added: "1.8"
-  read_only:
-    description:
-      - Mount the container's root filesystem as read only
+    version_added: '2.1'
+  dns:
     default: null
-    aliases: []
-    version_added: "2.0"
-  restart_policy:
     description:
-      - Container restart policy.
-      - The 'unless-stopped' choice is only available starting in Ansible 2.1 and for Docker 1.9 and above.
-    choices: ["no", "on-failure", "always", "unless-stopped"]
+    - List of custom DNS servers for the container.
+    required: false
+  docker_api_version:
+    default: docker-py default remote API version
+    description:
+    - Remote API version to use. This defaults to the current default as specified
+      by docker-py.
+    version_added: '1.8'
+  docker_url:
+    default: ${DOCKER_HOST} or unix://var/run/docker.sock
+    description:
+    - URL of the host running the docker daemon. This will default to the env var
+      DOCKER_HOST if unspecified.
+  docker_user:
     default: null
-    version_added: "1.9"
-  restart_policy_retry:
     description:
-      - Maximum number of times to restart a container. Leave as "0" for unlimited
-        retries.
-    default: 0
-    version_added: "1.9"
+    - Username or UID to use within the container
+    required: false
+    version_added: '2.0'
+  domainname:
+    default: null
+    description:
+    - Container domain name.
+  email:
+    default: null
+    description:
+    - Remote API email.
+  entrypoint:
+    default: null
+    description:
+    - Corresponds to ``--entrypoint`` option of ``docker run`` command and ``ENTRYPOINT``
+      directive of Dockerfile. Used to match and launch containers.
+    required: false
+    version_added: '2.1'
+  env:
+    default: null
+    description:
+    - Pass a dict of environment variables to the container.
+  env_file:
+    default: null
+    description:
+    - Pass in a path to a file with environment variable (FOO=BAR). If a key value
+      is present in both explicitly presented (i.e. as 'env') and in the environment
+      file, the explicit value will override. Requires docker-py >= 1.4.0.
+    required: false
+    version_added: '2.1'
+  expose:
+    default: null
+    description:
+    - List of additional container ports to expose for port mappings or links. If
+      the port is already exposed using EXPOSE in a Dockerfile, you don't need to
+      expose it again.
+    version_added: '1.5'
   extra_hosts:
-    version_added: "2.0"
     description:
     - Dict of custom host-to-IP mappings to be defined in the container
+    version_added: '2.0'
+  hostname:
+    default: null
+    description:
+    - Container hostname.
+  image:
+    description:
+    - Container image used to match and launch containers.
+    required: true
   insecure_registry:
-    description:
-      - Use insecure private registry by HTTP instead of HTTPS. Needed for
-        docker-py >= 0.5.0.
     default: false
-    version_added: "1.9"
-  cpu_set:
     description:
-      - CPUs in which to allow execution. Requires docker-py >= 0.6.0.
-    required: false
-    default: null
-    version_added: "2.0"
-  cap_add:
-    description:
-      - Add capabilities for the container. Requires docker-py >= 0.5.0.
-    required: false
-    default: false
-    version_added: "2.0"
-  cap_drop:
-    description:
-      - Drop capabilities for the container. Requires docker-py >= 0.5.0.
-    required: false
-    default: false
-    aliases: []
-    version_added: "2.0"
+    - Use insecure private registry by HTTP instead of HTTPS. Needed for docker-py
+      >= 0.5.0.
+    version_added: '1.9'
   labels:
-    description:
-      - Set container labels. Requires docker >= 1.6 and docker-py >= 1.2.0.
-    required: false
     default: null
-    version_added: "2.1"
-  stop_timeout:
     description:
-      - How many seconds to wait for the container to stop before killing it.
+    - Set container labels. Requires docker >= 1.6 and docker-py >= 1.2.0.
     required: false
-    default: 10
-    version_added: "2.0"
-  timeout:
+    version_added: '2.1'
+  links:
+    default: null
     description:
-      - Docker daemon response timeout in seconds.
-    required: false
-    default: 60
-    version_added: "2.1"
-  cpu_shares:
+    - List of other containers to link within this container with an optional
+    - 'alias. Use docker CLI-style syntax: C(redis:myredis).'
+    version_added: '1.5'
+  log_driver:
+    choices:
+    - json-file
+    - none
+    - syslog
+    - journald
+    - gelf
+    - fluentd
+    - awslogs
+    default: json-file
     description:
-      - CPU shares (relative weight). Requires docker-py >= 0.6.0.
+    - You can specify a different logging driver for the container than for the daemon.
+      "json-file" Default logging driver for Docker. Writes JSON messages to file.
+      docker logs command is available only for this logging driver. "none" disables
+      any logging for the container. "syslog" Syslog logging driver for Docker. Writes
+      log messages to syslog. docker logs command is not available for this logging
+      driver. "journald" Journald logging driver for Docker. Writes log messages to
+      "journald". "gelf" Graylog Extended Log Format (GELF) logging driver for Docker.
+      Writes log messages to a GELF endpoint likeGraylog or Logstash. "fluentd" Fluentd
+      logging driver for Docker. Writes log messages to "fluentd" (forward input).
+      "awslogs" (added in 2.1) Awslogs logging driver for Docker. Writes log messages
+      to AWS Cloudwatch Logs. If not defined explicitly, the Docker daemon's default
+      ("json-file") will apply. Requires docker >= 1.6.0.
     required: false
+    version_added: '2.0'
+  log_opt:
+    default: null
+    description:
+    - Additional options to pass to the logging driver selected above. See Docker
+      `log-driver <https://docs.docker.com/reference/logging/overview/>` documentation
+      for more information. Requires docker >=1.7.0.
+    required: false
+    version_added: '2.0'
+  lxc_conf:
+    default: null
+    description:
+    - LXC configuration parameters, such as C(lxc.aa_profile:unconfined).
+  memory_limit:
     default: 0
-    version_added: "2.1"
-  ulimits:
     description:
-      - ulimits, list ulimits with name, soft and optionally
-        hard limit separated by colons. e.g. nofile:1024:2048
-        Requires docker-py >= 1.2.0 and docker >= 1.6.0
-    required: false
+    - RAM allocated to the container as a number of bytes or as a human-readable string
+      like "512MB". Leave as "0" to specify no limit.
+  name:
     default: null
-    version_added: "2.1"
-
-author:
-    - "Cove Schneider (@cove)"
-    - "Joshua Conner (@joshuaconner)"
-    - "Pavel Antonov (@softzilla)"
-    - "Thomas Steinbach (@ThomasSteinbach)"
-    - "Philippe Jandot (@zfil)"
-    - "Daan Oosterveld (@dusdanig)"
+    description:
+    - Name used to match and uniquely name launched containers. Explicit names are
+      used to uniquely identify a single container or to link among containers. Mutually
+      exclusive with a "count" other than "1".
+    version_added: '1.5'
+  net:
+    default: false
+    description:
+    - 'Network mode for the launched container: bridge, none, container:<name|id>'
+    - or host. Requires docker >= 0.11.
+    version_added: '1.8'
+  password:
+    default: null
+    description:
+    - Remote API password.
+  pid:
+    aliases: []
+    default: None
+    description:
+    - Set the PID namespace mode for the container (currently only supports 'host').
+      Requires docker-py >= 1.0.0 and docker >= 1.5.0
+    required: false
+    version_added: '1.9'
+  ports:
+    default: null
+    description:
+    - 'List containing private to public port mapping specification. Use docker ''CLI-style
+      syntax: C(8000), C(9000:8000), or C(0.0.0.0:9000:8000)'' where 8000 is a container
+      port, 9000 is a host port, and 0.0.0.0 is - a host interface. The container
+      ports need to be exposed either in the Dockerfile or via the C(expose) option.'
+    version_added: '1.5'
+  privileged:
+    default: false
+    description:
+    - Whether the container should run in privileged mode or not.
+  publish_all_ports:
+    default: false
+    description:
+    - Publish all exposed ports to the host interfaces.
+    version_added: '1.5'
+  pull:
+    choices:
+    - missing
+    - always
+    default: missing
+    description:
+    - Control when container images are updated from the C(docker_url) registry. If
+      "missing," images will be pulled only when missing from the host; if '"always,"
+      the registry will be checked for a newer version of the image' each time the
+      task executes.
+    version_added: '1.9'
+  read_only:
+    aliases: []
+    default: null
+    description:
+    - Mount the container's root filesystem as read only
+    version_added: '2.0'
+  registry:
+    aliases: []
+    default: DockerHub
+    description:
+    - Remote registry URL to pull images from.
+    version_added: '1.8'
+  restart_policy:
+    choices:
+    - 'no'
+    - on-failure
+    - always
+    - unless-stopped
+    default: null
+    description:
+    - Container restart policy.
+    - The 'unless-stopped' choice is only available starting in Ansible 2.1 and for
+      Docker 1.9 and above.
+    version_added: '1.9'
+  restart_policy_retry:
+    default: 0
+    description:
+    - Maximum number of times to restart a container. Leave as "0" for unlimited retries.
+    version_added: '1.9'
+  signal:
+    default: KILL
+    description:
+    - With the state "killed", you can alter the signal sent to the container.
+    required: false
+    version_added: '2.0'
+  state:
+    choices:
+    - present
+    - started
+    - reloaded
+    - restarted
+    - stopped
+    - killed
+    - absent
+    default: started
+    description:
+    - Assert the container's desired state. "present" only asserts that the matching
+      containers exist. "started" asserts that the matching containers both exist
+      and are running, but takes no action if any configuration has changed. "reloaded"
+      (added in Ansible 1.9) asserts that all matching containers are running and
+      restarts any that have any images or configuration out of date. "restarted"
+      unconditionally restarts (or starts) the matching containers. "stopped" and
+      '"killed" stop and kill all matching containers. "absent" stops and then' removes
+      any matching containers.
+    required: false
+  stdin_open:
+    default: false
+    description:
+    - Keep stdin open after a container is launched.
+    version_added: '1.6'
+  stop_timeout:
+    default: 10
+    description:
+    - How many seconds to wait for the container to stop before killing it.
+    required: false
+    version_added: '2.0'
+  timeout:
+    default: 60
+    description:
+    - Docker daemon response timeout in seconds.
+    required: false
+    version_added: '2.1'
+  tls_ca_cert:
+    default: ${DOCKER_CERT_PATH}/ca.pem
+    description:
+    - Path to a PEM-encoded certificate authority to secure the Docker connection.
+      This has no effect if use_tls is encrypt.
+    version_added: '1.9'
+  tls_client_cert:
+    default: ${DOCKER_CERT_PATH}/cert.pem
+    description:
+    - Path to the PEM-encoded certificate used to authenticate docker client. If specified
+      tls_client_key must be valid
+    version_added: '1.9'
+  tls_client_key:
+    default: ${DOCKER_CERT_PATH}/key.pem
+    description:
+    - Path to the PEM-encoded key used to authenticate docker client. If specified
+      tls_client_cert must be valid
+    version_added: '1.9'
+  tls_hostname:
+    default: Taken from docker_url
+    description:
+    - A hostname to check matches what's supplied in the docker server's certificate.  If
+      unspecified, the hostname is taken from the docker_url.
+    version_added: '1.9'
+  tty:
+    default: false
+    description:
+    - Allocate a pseudo-tty within the container.
+    version_added: '1.6'
+  ulimits:
+    default: null
+    description:
+    - ulimits, list ulimits with name, soft and optionally hard limit separated by
+      colons. e.g. nofile:1024:2048 Requires docker-py >= 1.2.0 and docker >= 1.6.0
+    required: false
+    version_added: '2.1'
+  use_tls:
+    choices:
+    - 'no'
+    - encrypt
+    - verify
+    description:
+    - Whether to use tls to connect to the docker server.  "no" means not to use tls
+      (and ignore any other tls related parameters). "encrypt" means to use tls to
+      encrypt the connection to the server.  "verify" means to also verify that the
+      server's certificate is valid for the server (this both verifies the certificate
+      against the CA and that the certificate was issued for that host. If this is
+      unspecified, tls will only be used if one of the other tls options require it.
+    version_added: '1.9'
+  username:
+    default: null
+    description:
+    - Remote API username.
+  volumes:
+    default: null
+    description:
+    - List of volumes to mount within the container
+    - 'Use docker CLI-style syntax: C(/host:/container[:mode])'
+    - You can specify a read mode for the mount with either C(ro) or C(rw). Starting
+      at version 2.1, SELinux hosts can additionally use C(z) or C(Z) mount options
+      to use a shared or private label for the volume.
+  volumes_from:
+    default: null
+    description:
+    - List of names of containers to mount volumes from.
 requirements:
-    - "python >= 2.6"
-    - "docker-py >= 0.3.0"
-    - "The docker server >= 0.10.0"
+- python >= 2.6
+- docker-py >= 0.3.0
+- The docker server >= 0.10.0
+short_description: manage docker containers
+version_added: '1.4'
 '''
 
 EXAMPLES = '''
